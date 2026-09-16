@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f4f6f8;
+  --color-border: #d9dee3;
+  --color-text-muted: #8b97a3;
+  --color-text-dark: #1f2933;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-dark);
+}
+
+.font-poppins {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+.font-outfit {
+  font-family: var(--font-outfit), sans-serif;
+}
