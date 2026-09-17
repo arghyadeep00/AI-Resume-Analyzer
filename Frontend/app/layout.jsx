@@ -18,10 +18,16 @@ export const metadata = {
   description: 'AI-Powered Resume Intelligence for Modern Hiring Teams',
 };
 
+import { Providers } from './Providers';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${poppins.variable} ${outfit.variable}`}>
-      <body className="font-outfit antialiased">{children}</body>
+      <body className="font-outfit antialiased">
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }
