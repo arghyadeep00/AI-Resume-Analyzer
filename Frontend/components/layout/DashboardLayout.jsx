@@ -19,6 +19,7 @@ import {
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { mockUser } from '@/data/users';
+import { useSession, signOut } from 'next-auth/react';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -32,7 +33,8 @@ const navItems = [
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const { data: session, status } = useSession();
+  
   return (
     <div className="flex h-screen bg-secondary overflow-hidden">
       {/* Mobile Sidebar Overlay */}
@@ -49,7 +51,7 @@ export default function DashboardLayout({ children }) {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex h-16 items-center px-6 border-b border-border justify-between md:justify-center">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <BrainCircuit className="h-6 w-6 text-blue-600" />
             <span className="font-poppins text-xl font-bold text-text-dark">ResumeAI</span>
           </Link>
@@ -107,12 +109,19 @@ export default function DashboardLayout({ children }) {
             
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">
-                <div className="text-sm font-medium text-text-dark leading-none">{mockUser.name}</div>
-                <div className="text-xs text-text-muted mt-1">{mockUser.role}</div>
+                <div className="text-sm font-medium text-text-dark leading-none">{session?.user?.name}</div>
+                <div className="text-xs text-text-muted mt-1">{session?.user?.role}</div>
               </div>
               <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold border border-blue-200">
-                {mockUser.name.charAt(0)}
+                {session?.user?.name.charAt(0)}
               </div>
+              <button 
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="p-2 text-text-muted hover:text-red-600 rounded-full hover:bg-red-50 transition-colors ml-1"
+                title="Log Out"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </header>

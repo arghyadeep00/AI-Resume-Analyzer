@@ -1,5 +1,3 @@
-
-
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +10,6 @@ import Link from 'next/link';
 
 export default function CandidatesPage() {
   
-
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
