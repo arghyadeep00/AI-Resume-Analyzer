@@ -1,17 +1,21 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockJobs } from '@/data/jobs';
 import { mockCandidates } from '@/data/candidates';
-import { UploadCloud, FileText, CheckCircle2, AlertCircle, Sparkles, X, ChevronRight, Briefcase } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, AlertCircle, Sparkles, X, ChevronRight, Briefcase, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { getJobs } from '@/services/jobService';
+import { toast } from 'react-toastify';
 
 export default function ResumeAnalyzerPage() {
-  const [selectedJob, setSelectedJob] = useState(mockJobs[0].id);
+  const [jobs, setJobs] = useState([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [selectedJobId, setSelectedJobId] = useState("");
+  
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -19,7 +23,26 @@ export default function ResumeAnalyzerPage() {
   const [result, setResult] = useState(null);
   const fileInputRef = useRef(null);
 
-  const job = mockJobs.find(j => j.id === selectedJob);
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await getJobs();
+        const fetchedJobs = data.jobs || data || [];
+        setJobs(fetchedJobs);
+        if (fetchedJobs.length > 0) {
+          setSelectedJobId(fetchedJobs[0]._id || fetchedJobs[0].id);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to fetch jobs");
+      } finally {
+        setIsLoadingJobs(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  const job = jobs.find(j => (j._id || j.id) === selectedJobId);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -65,7 +88,7 @@ export default function ResumeAnalyzerPage() {
       "Calculating candidate score..."
     ];
 
-    // Mock analysis process
+    // Mock analysis process for now as backend doesn't have resume parser
     let step = 0;
     const interval = setInterval(() => {
       step++;
@@ -101,31 +124,38 @@ export default function ResumeAnalyzerPage() {
                 <CardDescription>Select the job to match against</CardDescription>
               </CardHeader>
               <CardContent>
-                <select 
-                  className="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedJob}
-                  onChange={(e) => setSelectedJob(e.target.value)}
-                >
-                  {mockJobs.map(j => (
-                    <option key={j.id} value={j.id}>{j.title}</option>
-                  ))}
-                </select>
+                {isLoadingJobs ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  </div>
+                ) : (
+                  <select 
+                    className="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedJobId}
+                    onChange={(e) => setSelectedJobId(e.target.value)}
+                  >
+                    {jobs.length === 0 && <option value="">No jobs available</option>}
+                    {jobs.map(j => (
+                      <option key={j._id || j.id} value={j._id || j.id}>{j.title}</option>
+                    ))}
+                  </select>
+                )}
 
                 {job && (
                   <div className="mt-6 pt-6 border-t border-border">
                     <h4 className="text-sm font-semibold mb-3">Required Skills</h4>
                     <div className="flex flex-wrap gap-2">
-                      {job.requiredSkills.map(skill => (
+                      {job.skills?.length > 0 ? job.skills.map(skill => (
                         <span key={skill} className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
                           {skill}
                         </span>
-                      ))}
+                      )) : <span className="text-xs text-text-muted">None specified</span>}
                     </div>
                     
                     <h4 className="text-sm font-semibold mt-5 mb-2">Experience Level</h4>
                     <div className="flex items-center text-sm text-text-muted">
                       <Briefcase className="h-4 w-4 mr-2" />
-                      {job.experienceLevel}
+                      {job.experienceYears} Years
                     </div>
                   </div>
                 )}
@@ -227,7 +257,7 @@ export default function ResumeAnalyzerPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="success">Analysis Complete</Badge>
-                        <span className="text-sm text-text-muted text-gray-500">Matched against: {job.title}</span>
+                        <span className="text-sm text-text-muted text-gray-500">Matched against: {job?.title || 'Unknown Job'}</span>
                       </div>
                       <h2 className="text-2xl font-bold font-poppins text-gray-900">{result.name}</h2>
                       <p className="text-gray-600">{result.role}</p>

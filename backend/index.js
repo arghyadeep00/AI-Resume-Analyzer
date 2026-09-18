@@ -3,11 +3,11 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import jobRoutes from "./router/job.route.js";
-
+import storageRoutes from "./router/storage.route.js";
 dotenv.config();
 
 const app = express();
-app.use(cors({origin: "http://localhost:3000", credentials: true}));
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 
 import userRoutes from "./router/user.route.js";
@@ -16,8 +16,10 @@ import cookieParser from "cookie-parser";
 connectDB();
 
 app.use(cookieParser());
+
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/storage", storageRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
