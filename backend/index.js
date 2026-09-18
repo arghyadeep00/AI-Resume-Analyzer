@@ -2,11 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
+import jobRoutes from "./router/job.route.js";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({origin: "http://localhost:3000", credentials: true}));
 app.use(express.json());
 
 import userRoutes from "./router/user.route.js";
@@ -16,6 +17,7 @@ connectDB();
 
 app.use(cookieParser());
 app.use("/api/users", userRoutes);
+app.use("/api/jobs", jobRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

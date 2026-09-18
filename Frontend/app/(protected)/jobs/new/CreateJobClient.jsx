@@ -7,15 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createJob } from '@/services/jobService';
+import { toast } from 'react-toastify';
 
 export default function CreateJobPage() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     department: '',
     location: '',
-    type: 'Full Time',
+    type: 'Full-time',
     experienceLevel: 'Mid-Level',
     description: '',
     requiredSkills: '',
@@ -34,9 +37,27 @@ export default function CreateJobPage() {
     }, 1500);
   };
 
-  const handleSave = () => {
-    // Mock save
-    router.push('/jobs');
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const payload = {
+        title: formData.title,
+        department: formData.department,
+        location: formData.location,
+        employmentType: formData.type,
+        description: formData.description,
+        skills: formData.requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
+        experienceYears: formData.experienceLevel === 'Senior' ? 5 : (formData.experienceLevel === 'Mid-Level' ? 3 : 1)
+      };
+      await createJob(payload);
+      toast.success('Job created successfully');
+      router.push('/jobs');
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to create job');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -83,10 +104,15 @@ export default function CreateJobPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Employment Type</label>
-                <select className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                  <option>Full Time</option>
-                  <option>Part Time</option>
-                  <option>Contract</option>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  value={formData.type}
+                  onChange={e => setFormData({...formData, type: e.target.value})}
+                >
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
                 </select>
               </div>
             </div>
@@ -118,8 +144,11 @@ export default function CreateJobPage() {
           </CardContent>
           <CardFooter className="flex justify-end gap-3 bg-gray-50 border-t border-border p-4 rounded-b-xl">
             <Button variant="ghost" onClick={() => router.push('/jobs')}>Cancel</Button>
-            <Button variant="outline">Save Draft</Button>
-            <Button onClick={handleSave}>Publish Job</Button>
+            <Button variant="outline" disabled={isSaving}>Save Draft</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Publish Job
+            </Button>
           </CardFooter>
         </Card>
       </div>
