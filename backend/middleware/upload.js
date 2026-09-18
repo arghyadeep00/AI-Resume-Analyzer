@@ -26,10 +26,17 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/pdf") {
+  const allowedMimeTypes = [
+    "application/pdf",
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/x-zip"
+  ];
+  
+  if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Only PDF files are allowed!"), false);
+    cb(new Error("Only PDF and ZIP files are allowed!"), false);
   }
 };
 

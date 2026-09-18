@@ -184,13 +184,13 @@ export default function ResumeAnalyzerPage() {
                         <>
                           <h3 className="text-lg font-semibold font-poppins mb-2">Drag & Drop Resume Here</h3>
                           <p className="text-text-muted text-sm mb-6 max-w-sm">
-                            Supports PDF, DOCX, and TXT files. You can also upload multiple resumes to batch process.
+                            Supports PDF, ZIP files. You can also upload multiple resumes to batch process.
                           </p>
                           <input 
                             ref={fileInputRef}
                             type="file" 
                             className="hidden" 
-                            accept=".pdf,.doc,.docx,.txt"
+                            accept=".pdf,.doc,.docx,.txt,.zip"
                             onChange={handleChange}
                           />
                           <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
