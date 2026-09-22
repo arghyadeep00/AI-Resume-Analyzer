@@ -52,7 +52,7 @@ cd AI-Resume-Analyzer
 ### 2. Backend Setup
 Navigate to the backend directory and install dependencies:
 ```bash
-cd Backend
+cd backend
 npm install
 ```
 

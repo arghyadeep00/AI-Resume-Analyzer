@@ -1,4 +1,5 @@
-import { getModel, SchemaType } from "./provider.js";
+import { SchemaType } from "@google/generative-ai";
+import { getModel } from "./provider.js";
 
 const jobSchema = {
   type: SchemaType.OBJECT,
