@@ -18,7 +18,6 @@ export default function JobsPage() {
     const fetchJobs = async () => {
       try {
         const data = await getJobs();
-        // The backend returns { success, jobs } or similar
         setJobs(data.jobs || data || []);
       } catch (error) {
         console.error(error);
@@ -64,10 +63,7 @@ export default function JobsPage() {
               <Card key={job._id || job.id} className="hover:shadow-md transition-shadow group flex flex-col">
                 <CardContent className="p-6 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-4">
-                    <Badge variant="success" className="mb-2">
-                      Active
-                    </Badge>
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-8 px-2" asChild>
+                    <Button variant="ghost" size="sm" className="h-8 px-2" asChild>
                       <Link href={`/jobs/${job._id || job.id}`}>View Details</Link>
                     </Button>
                   </div>
@@ -84,17 +80,13 @@ export default function JobsPage() {
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-gray-400" /> {job.employmentType} • {job.experienceYears} Years Exp
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-gray-400" /> {job.applicants?.length || 0} Applicants
-                    </div>
                   </div>
                   
                   <div className="mt-6 pt-4 border-t border-border flex justify-between items-center text-xs text-text-muted">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" /> 
-                      Created: {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A'}
+                      Created: {job.createdAt ? new Date(job.createdAt).toLocaleDateString("en-In") : 'N/A'}
                     </span>
-                    <span className="font-medium text-blue-600">0 Shortlisted</span>
                   </div>
                 </CardContent>
               </Card>

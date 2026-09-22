@@ -1,5 +1,6 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Job from "../models/Job.js";
+import { parseJobDescription } from "../services/ai/jobAnalyzer.js";
 
 export const postJob = asyncHandler(async (req, res) => {
   const {
@@ -17,6 +18,13 @@ export const postJob = asyncHandler(async (req, res) => {
     throw new Error("Please fill in all required fields");
   }
 
+  let parsedData = {};
+  try {
+    parsedData = await parseJobDescription(description, title);
+  } catch (error) {
+    console.error("AI parsing failed during job creation:", error);
+  }
+
   const job = new Job({
     title,
     department,
@@ -25,9 +33,10 @@ export const postJob = asyncHandler(async (req, res) => {
     location,
     skills,
     experienceYears,
+    parsedData,
   });
   await job.save();
-  res.status(201).json({ message: "Job posted successfully" });
+  res.status(201).json({ message: "Job posted successfully", job });
 });
 
 export const getJobs = asyncHandler(async (req, res) => {

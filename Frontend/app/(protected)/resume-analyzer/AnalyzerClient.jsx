@@ -3,13 +3,13 @@ import { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockCandidates } from '@/data/candidates';
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Sparkles, X, ChevronRight, Briefcase, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { getJobs } from '@/services/jobService';
 import { toast } from 'react-toastify';
+import { uploadAndAnalyzeResume } from '@/services/analysisService';
 
 export default function ResumeAnalyzerPage() {
   const [jobs, setJobs] = useState([]);
@@ -30,7 +30,7 @@ export default function ResumeAnalyzerPage() {
         const fetchedJobs = data.jobs || data || [];
         setJobs(fetchedJobs);
         if (fetchedJobs.length > 0) {
-          setSelectedJobId(fetchedJobs[0]._id || fetchedJobs[0].id);
+          setSelectedJobId(fetchedJobs[0]._id);
         }
       } catch (error) {
         console.error(error);
@@ -42,7 +42,7 @@ export default function ResumeAnalyzerPage() {
     fetchJobs();
   }, []);
 
-  const job = jobs.find(j => (j._id || j.id) === selectedJobId);
+  const job = jobs.find(j => (j._id) === selectedJobId);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -76,32 +76,48 @@ export default function ResumeAnalyzerPage() {
     setResult(null);
   };
 
-  const analyzeResume = () => {
-    if (!file) return;
+  const analyzeResume = async () => {
+    if (!file || !selectedJobId) {
+      toast.error("Please select a job and upload a resume");
+      return;
+    }
+    
     setIsAnalyzing(true);
     setAnalysisStep(0);
 
-    const steps = [
-      "Extracting text from document...",
-      "Identifying skills and experience...",
-      "Matching against job requirements...",
-      "Calculating candidate score..."
-    ];
-
-    // Mock analysis process for now as backend doesn't have resume parser
-    let step = 0;
     const interval = setInterval(() => {
-      step++;
-      setAnalysisStep(step);
-      if (step >= steps.length) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsAnalyzing(false);
-          // Set mock result (John Doe)
-          setResult(mockCandidates[0]);
-        }, 800);
-      }
-    }, 1200);
+      setAnalysisStep((prev) => Math.min(prev + 1, 3));
+    }, 2500);
+
+    try {
+      const analysisData = await uploadAndAnalyzeResume(file, selectedJobId);
+      
+      clearInterval(interval);
+      setAnalysisStep(4);
+      
+      const candidateName =
+        analysisData.resumeId?.parsedData?.personal?.name ||
+        file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+
+      setResult({
+        id: analysisData._id,
+        name: candidateName,
+        role: job?.title || "Candidate",
+        matchScore: analysisData.score || 0,
+        aiRecommendation: analysisData.aiAnalysis?.summary || "Analysis complete.",
+        supportingFactors: analysisData.aiAnalysis?.strengths || [],
+        skills: analysisData.matchedSkills || [],
+        missingSkills: analysisData.missingSkills || [],
+      });
+      
+      toast.success("Resume analyzed successfully!");
+    } catch (error) {
+      console.error(error);
+      clearInterval(interval);
+      toast.error(error.response?.data?.message || "Failed to analyze resume");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (

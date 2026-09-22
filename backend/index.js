@@ -12,6 +12,7 @@ app.use(express.json());
 
 import userRoutes from "./router/user.route.js";
 import cookieParser from "cookie-parser";
+import analysisRoutes from "./router/analysis.route.js";
 
 connectDB();
 
@@ -20,6 +21,7 @@ app.use(cookieParser());
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/storage", storageRoutes);
+app.use("/api/analysis", analysisRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

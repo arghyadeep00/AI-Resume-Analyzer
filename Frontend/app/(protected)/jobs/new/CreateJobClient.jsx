@@ -1,37 +1,54 @@
-'use client';
-import { useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { createJob } from '@/services/jobService';
-import { toast } from 'react-toastify';
+"use client";
+import { useState } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sparkles, ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createJob } from "@/services/jobService";
+import { toast } from "react-toastify";
 
 export default function CreateJobPage() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    department: '',
-    location: '',
-    type: 'Full-time',
-    experienceLevel: 'Mid-Level',
-    description: '',
-    requiredSkills: '',
+    company: "",
+    title: "",
+    department: "",
+    location: "",
+    type: "Full-time",
+    experienceYears: "",
+    description: "",
+    requiredSkills: "",
+    preferredSkills: "",
+    educationRequirements: "",
+    responsibilities: "",
+    technologies: "",
   });
 
   const handleGenerate = () => {
-    if (!formData.title) return alert('Please enter a Job Title first');
+    if (!formData.title) return alert("Please enter a Job Title first");
     setIsGenerating(true);
     setTimeout(() => {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        description: `We are seeking a talented ${prev.title} to join our ${prev.department || 'Engineering'} team. In this role, you will be responsible for designing and implementing scalable solutions that impact millions of users. You will collaborate closely with cross-functional teams including design and product management.`,
-        requiredSkills: 'JavaScript, React, Node.js, Problem Solving, Communication'
+        description: `We are seeking a talented ${prev.title} to join our ${prev.department || "Engineering"} team. In this role, you will be responsible for designing and implementing scalable solutions that impact millions of users. You will collaborate closely with cross-functional teams including design and product management.`,
+        requiredSkills: "JavaScript, React, Node.js, Problem Solving",
+        preferredSkills: "TypeScript, AWS, Docker",
+        responsibilities:
+          "Design scalable systems\nCollaborate with cross-functional teams\nWrite clean, maintainable code\nParticipate in code reviews",
+        educationRequirements:
+          "Bachelor\\`s in Computer Science or related field",
+        technologies: "React, Node.js, Git",
       }));
       setIsGenerating(false);
     }, 1500);
@@ -40,21 +57,50 @@ export default function CreateJobPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
+
       const payload = {
         title: formData.title,
+        company: formData.company || "Unknown Company",
         department: formData.department,
         location: formData.location,
         employmentType: formData.type,
         description: formData.description,
-        skills: formData.requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
-        experienceYears: formData.experienceLevel === 'Senior' ? 5 : (formData.experienceLevel === 'Mid-Level' ? 3 : 1)
+        skills: formData.requiredSkills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        experienceYears: Number(formData.experienceYears) || 0,
+        parsedData: {
+          requiredSkills: formData.requiredSkills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          preferredSkills: formData.preferredSkills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          requiredExperienceYears: Number(formData.experienceYears) || 0,
+          educationRequirements: formData.educationRequirements
+            .split("\\n")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          responsibilities: formData.responsibilities
+            .split("\\n")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          technologies: formData.technologies
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        },
       };
+
       await createJob(payload);
-      toast.success('Job created successfully');
-      router.push('/jobs');
+      toast.success("Job created successfully");
+      router.push("/jobs");
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || 'Failed to create job');
+      toast.error(error.response?.data?.message || "Failed to create job");
     } finally {
       setIsSaving(false);
     }
@@ -62,91 +108,239 @@ export default function CreateJobPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6 max-w-4xl mx-auto pb-10">
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-10">
         <div className="flex items-center gap-4">
           <Link href="/jobs">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold font-poppins text-text-dark">Create New Job</h1>
-            <p className="text-text-muted mt-1">Define the requirements to help AI match candidates better.</p>
+            <h1 className="text-2xl font-bold font-poppins text-text-dark">
+              Create New Job
+            </h1>
+            <p className="text-text-muted mt-1">
+              Define the full requirements to help AI match candidates
+              perfectly.
+            </p>
           </div>
         </div>
 
         <Card>
-          <CardContent className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Job Title</label>
-                <Input 
-                  placeholder="e.g. Senior Frontend Engineer" 
-                  value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Department</label>
-                <Input 
-                  placeholder="e.g. Engineering"
-                  value={formData.department}
-                  onChange={e => setFormData({...formData, department: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location</label>
-                <Input 
-                  placeholder="e.g. Remote, New York"
-                  value={formData.location}
-                  onChange={e => setFormData({...formData, location: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Employment Type</label>
-                <select 
-                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  value={formData.type}
-                  onChange={e => setFormData({...formData, type: e.target.value})}
-                >
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
-                </select>
+          <CardContent className="p-6 space-y-8">
+            {/* Basic Info Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">
+                Basic Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Job Title *</label>
+                  <Input
+                    placeholder="e.g. Senior Frontend Engineer"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Company Name</label>
+                  <Input
+                    placeholder="e.g. Acme Corp"
+                    value={formData.company}
+                    onChange={(e) =>
+                      setFormData({ ...formData, company: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Department *</label>
+                  <Input
+                    placeholder="e.g. Engineering"
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Location</label>
+                  <Input
+                    placeholder="e.g. Remote, New York"
+                    value={formData.location}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Employment Type *
+                  </label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    value={formData.type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value })
+                    }
+                  >
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Experience (Years)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 3"
+                    value={formData.experienceYears}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        experienceYears: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-border">
-              <div className="flex justify-between items-center mb-4">
-                <label className="text-sm font-medium">Job Description</label>
-                <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating} className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                  {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+            {/* Job Description Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="text-lg font-semibold">Job Description</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
                   Generate with AI
                 </Button>
               </div>
-              <textarea 
+              <textarea
                 className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[150px]"
-                placeholder="Describe the responsibilities and requirements..."
+                placeholder="Describe the overall role and requirements..."
                 value={formData.description}
-                onChange={e => setFormData({...formData, description: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               ></textarea>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Required Skills (Comma separated)</label>
-              <Input 
-                placeholder="React, Node.js, TypeScript"
-                value={formData.requiredSkills}
-                onChange={e => setFormData({...formData, requiredSkills: e.target.value})}
-              />
+            {/* AI Parsing Requirements Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">
+                Specific Requirements (For AI Matching)
+              </h3>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Responsibilities (One per line)
+                </label>
+                <textarea
+                  className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[100px]"
+                  placeholder="Design scalable systems&#10;Collaborate with cross-functional teams..."
+                  value={formData.responsibilities}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      responsibilities: e.target.value,
+                    })
+                  }
+                ></textarea>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Education Requirements (One per line)
+                </label>
+                <textarea
+                  className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[80px]"
+                  placeholder="Bachelor's in Computer Science or related field&#10;Master's degree preferred..."
+                  value={formData.educationRequirements}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      educationRequirements: e.target.value,
+                    })
+                  }
+                ></textarea>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Required Skills * (Comma separated)
+                  </label>
+                  <Input
+                    placeholder="React, Node.js, TypeScript"
+                    value={formData.requiredSkills}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        requiredSkills: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Preferred Skills (Comma separated)
+                  </label>
+                  <Input
+                    placeholder="Docker, AWS, GraphQL"
+                    value={formData.preferredSkills}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        preferredSkills: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium">
+                    Technologies Used (Comma separated)
+                  </label>
+                  <Input
+                    placeholder="React, Next.js, Tailwind CSS, PostgreSQL"
+                    value={formData.technologies}
+                    onChange={(e) =>
+                      setFormData({ ...formData, technologies: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-end gap-3 bg-gray-50 border-t border-border p-4 rounded-b-xl">
-            <Button variant="ghost" onClick={() => router.push('/jobs')}>Cancel</Button>
-            <Button variant="outline" disabled={isSaving}>Save Draft</Button>
+            <Button variant="ghost" onClick={() => router.push("/jobs")}>
+              Cancel
+            </Button>
+            <Button variant="outline" disabled={isSaving}>
+              Save Draft
+            </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
               Publish Job
             </Button>
           </CardFooter>

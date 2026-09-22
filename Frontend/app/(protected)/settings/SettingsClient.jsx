@@ -4,12 +4,53 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mockUser } from '@/data/users';
+import { useSession } from 'next-auth/react';
+import { toast } from 'react-toastify';
+import { Loader2 } from 'lucide-react';
 
-export default function SettingsPage() {
+export default function SettingsClient() {
+  const { data: session } = useSession();
+  const user = session?.user || { name: 'User', email: 'user@example.com', role: 'recruiter' };
+  
   const [activeTab, setActiveTab] = useState('Profile');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [profileForm, setProfileForm] = useState({
+    name: user.name || '',
+    email: user.email || ''
+  });
+
+  const [aiPrefs, setAiPrefs] = useState({
+    skills: 40,
+    experience: 35,
+    education: 15,
+    keywords: 10,
+    strictMode: true
+  });
 
   const tabs = ['Profile', 'Company', 'AI Preferences', 'Notifications', 'Security'];
+
+  const handleSaveProfile = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      toast.success('Profile information updated successfully');
+    }, 1000);
+  };
+
+  const handleSaveAiPrefs = () => {
+    const total = Number(aiPrefs.skills) + Number(aiPrefs.experience) + Number(aiPrefs.education) + Number(aiPrefs.keywords);
+    if (total !== 100) {
+      toast.error(`Weights must add up to 100%. Current total: ${total}%`);
+      return;
+    }
+
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      toast.success('AI Preferences saved successfully');
+    }, 1000);
+  };
 
   return (
     <DashboardLayout>
@@ -50,27 +91,37 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-6 mb-6">
                     <div className="h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-2xl border border-blue-200">
-                      {mockUser.name.charAt(0)}
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     <Button variant="outline">Change Avatar</Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Full Name</label>
-                      <Input defaultValue={mockUser.name} />
+                      <Input 
+                        value={profileForm.name} 
+                        onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} 
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Email Address</label>
-                      <Input defaultValue={mockUser.email} type="email" />
+                      <Input 
+                        value={profileForm.email} 
+                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        type="email" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Role</label>
-                      <Input defaultValue={mockUser.role} disabled />
+                      <Input value={user.role || 'recruiter'} disabled className="capitalize" />
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter className="border-t border-border pt-6 justify-end">
-                  <Button>Save Changes</Button>
+                  <Button onClick={handleSaveProfile} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
                 </CardFooter>
               </Card>
             )}
@@ -79,52 +130,89 @@ export default function SettingsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>AI Analysis Configuration</CardTitle>
-                  <CardDescription>Customize how the AI scores candidates.</CardDescription>
+                  <CardDescription>Customize how the AI scores candidates. Total weight must be 100%.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-text-dark">Scoring Weights</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-text-dark">Scoring Weights</h4>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                        (Number(aiPrefs.skills) + Number(aiPrefs.experience) + Number(aiPrefs.education) + Number(aiPrefs.keywords)) === 100 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        Total: {Number(aiPrefs.skills) + Number(aiPrefs.experience) + Number(aiPrefs.education) + Number(aiPrefs.keywords)}%
+                      </span>
+                    </div>
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between text-sm mb-1 text-text-muted">
                           <span>Skills Match</span>
-                          <span>40%</span>
+                          <span>{aiPrefs.skills}%</span>
                         </div>
-                        <input type="range" className="w-full accent-blue-600" defaultValue="40" />
+                        <input 
+                          type="range" 
+                          className="w-full accent-blue-600" 
+                          value={aiPrefs.skills} 
+                          onChange={(e) => setAiPrefs({...aiPrefs, skills: e.target.value})}
+                        />
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1 text-text-muted">
                           <span>Experience Level</span>
-                          <span>35%</span>
+                          <span>{aiPrefs.experience}%</span>
                         </div>
-                        <input type="range" className="w-full accent-blue-600" defaultValue="35" />
+                        <input 
+                          type="range" 
+                          className="w-full accent-blue-600" 
+                          value={aiPrefs.experience} 
+                          onChange={(e) => setAiPrefs({...aiPrefs, experience: e.target.value})}
+                        />
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1 text-text-muted">
                           <span>Education</span>
-                          <span>15%</span>
+                          <span>{aiPrefs.education}%</span>
                         </div>
-                        <input type="range" className="w-full accent-blue-600" defaultValue="15" />
+                        <input 
+                          type="range" 
+                          className="w-full accent-blue-600" 
+                          value={aiPrefs.education} 
+                          onChange={(e) => setAiPrefs({...aiPrefs, education: e.target.value})}
+                        />
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1 text-text-muted">
                           <span>Keywords</span>
-                          <span>10%</span>
+                          <span>{aiPrefs.keywords}%</span>
                         </div>
-                        <input type="range" className="w-full accent-blue-600" defaultValue="10" />
+                        <input 
+                          type="range" 
+                          className="w-full accent-blue-600" 
+                          value={aiPrefs.keywords} 
+                          onChange={(e) => setAiPrefs({...aiPrefs, keywords: e.target.value})}
+                        />
                       </div>
                     </div>
                   </div>
                   <div className="space-y-2 pt-4 border-t border-border">
                     <h4 className="text-sm font-medium text-text-dark mb-2">Strict Mode</h4>
                     <label className="flex items-center gap-2 text-sm text-text-muted cursor-pointer">
-                      <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4" defaultChecked />
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4" 
+                        checked={aiPrefs.strictMode}
+                        onChange={(e) => setAiPrefs({...aiPrefs, strictMode: e.target.checked})}
+                      />
                       Automatically reject candidates below 50% match
                     </label>
                   </div>
                 </CardContent>
                 <CardFooter className="border-t border-border pt-6 justify-end">
-                  <Button>Save Preferences</Button>
+                  <Button onClick={handleSaveAiPrefs} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Preferences
+                  </Button>
                 </CardFooter>
               </Card>
             )}
