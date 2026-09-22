@@ -7,7 +7,15 @@ import storageRoutes from "./router/storage.route.js";
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === development
+        ? "http://localhost:3000"
+        : process.env.ORIGIN,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 import userRoutes from "./router/user.route.js";
