@@ -14,7 +14,6 @@ export default function Navbar() {
     { name: 'Product', href: '#product' },
     { name: 'How It Works', href: '#how-it-works' },
     { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
   ];
 
   return (
