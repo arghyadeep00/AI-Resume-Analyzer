@@ -2,8 +2,8 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL:
-    import.meta.env.NODE_ENV === "production"
-      ? import.meta.env.BASE_URL + "/api"
+    process.env.NODE_ENV === "production"
+      ? process.env.BASE_URL + "/api"
       : "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
