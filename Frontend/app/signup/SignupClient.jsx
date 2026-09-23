@@ -1,21 +1,59 @@
-'use client';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { BrainCircuit } from 'lucide-react';
-import { useState } from 'react';
+"use client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { BrainCircuit } from "lucide-react";
+import { useState } from "react";
+import api from "@/services/api";
+import { signIn } from "next-auth/react";
 
 export default function SignupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1000);
+    setError("");
+
+    const name = e.target.name.value;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+    const confirmPassword = e.target.confirmPassword.value;
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await api.post("/users/register", {
+        name,
+        email,
+        password,
+      });
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        setError(res.error);
+        setIsLoading(false);
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Registration failed",
+      );
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -32,28 +70,31 @@ export default function SignupPage() {
             Start analyzing resumes with AI today
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSignup}>
+          {error && (
+            <div className="p-3 rounded-md bg-red-50 text-red-500 text-sm text-center">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-text-dark">Company Name</label>
+              <label className="text-sm font-medium text-text-dark">
+                Full Name
+              </label>
               <Input
-                required
-                className="mt-1"
-                placeholder="Acme Inc."
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-text-dark">Full Name</label>
-              <Input
+                name="name"
                 required
                 className="mt-1"
                 placeholder="Jane Doe"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-text-dark">Work Email</label>
+              <label className="text-sm font-medium text-text-dark">
+                Work Email
+              </label>
               <Input
+                name="email"
                 type="email"
                 required
                 className="mt-1"
@@ -61,8 +102,11 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-text-dark">Password</label>
+              <label className="text-sm font-medium text-text-dark">
+                Password
+              </label>
               <Input
+                name="password"
                 type="password"
                 required
                 className="mt-1"
@@ -70,8 +114,11 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-text-dark">Confirm Password</label>
+              <label className="text-sm font-medium text-text-dark">
+                Confirm Password
+              </label>
               <Input
+                name="confirmPassword"
                 type="password"
                 required
                 className="mt-1"
@@ -81,15 +128,22 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <Button type="submit" className="w-full h-11 text-base shadow-md shadow-blue-500/20" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+            <Button
+              type="submit"
+              className="w-full h-11 text-base shadow-md shadow-blue-500/20"
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </div>
         </form>
-        
+
         <p className="mt-8 text-center text-sm text-text-muted">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             Sign in
           </Link>
         </p>

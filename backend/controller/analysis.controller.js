@@ -16,16 +16,16 @@ export const analyzeSingleResume = asyncHandler(async (req, res) => {
     throw new Error("resumeId and jobId are required");
   }
 
-  const job = await Job.findById(jobId);
-  const resume = await Resume.findById(resumeId);
+  const job = await Job.findOne({ _id: jobId, userId: req.user.id });
+  const resume = await Resume.findOne({ _id: resumeId, userId: req.user.id });
 
   if (!job) {
     res.status(404);
-    throw new Error("Job not found");
+    throw new Error("Job not found or unauthorized");
   }
   if (!resume) {
     res.status(404);
-    throw new Error("Resume not found");
+    throw new Error("Resume not found or unauthorized");
   }
 
   if (!fs.existsSync(resume.filePath)) {
@@ -33,7 +33,7 @@ export const analyzeSingleResume = asyncHandler(async (req, res) => {
     throw new Error("Resume file not found on disk");
   }
 
-  let analysis = await Analysis.findOne({ jobId, resumeId });
+  let analysis = await Analysis.findOne({ jobId, resumeId, userId: req.user.id });
   if (analysis && analysis.status === "completed") {
     const populated = await Analysis.findById(analysis._id)
       .populate("jobId")
@@ -42,7 +42,7 @@ export const analyzeSingleResume = asyncHandler(async (req, res) => {
   }
 
   if (!analysis) {
-    analysis = await Analysis.create({ jobId, resumeId, status: "pending" });
+    analysis = await Analysis.create({ jobId, resumeId, userId: req.user.id, status: "pending" });
   }
 
   try {
@@ -104,7 +104,7 @@ export const analyzeSingleResume = asyncHandler(async (req, res) => {
 });
 
 export const getAnalyses = asyncHandler(async (req, res) => {
-  const query = { status: "completed" };
+  const query = { status: "completed", userId: req.user.id };
   if (req.query.jobId) {
     query.jobId = req.query.jobId;
   }
@@ -118,13 +118,13 @@ export const getAnalyses = asyncHandler(async (req, res) => {
 });
 
 export const getAnalysisById = asyncHandler(async (req, res) => {
-  const analysis = await Analysis.findById(req.params.id)
+  const analysis = await Analysis.findOne({ _id: req.params.id, userId: req.user.id })
     .populate("jobId")
     .populate("resumeId");
 
   if (!analysis) {
     res.status(404);
-    throw new Error("Analysis not found");
+    throw new Error("Analysis not found or unauthorized");
   }
 
   res.status(200).json(analysis);

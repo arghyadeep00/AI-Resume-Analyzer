@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getSession } from "next-auth/react";
 
 const api = axios.create({
   baseURL:
@@ -7,6 +8,16 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true,
+});
+
+api.interceptors.request.use(async (config) => {
+  if (typeof window !== "undefined") {
+    const session = await getSession();
+    if (session?.accessToken) {
+      config.headers.Authorization = `Bearer ${session.accessToken}`;
+    }
+  }
+  return config;
 });
 
 export default api;

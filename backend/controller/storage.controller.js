@@ -25,20 +25,25 @@ export const uploadResumes = asyncHandler(async (req, res) => {
     if (isZip) {
       try {
         const directory = await unzipper.Open.file(file.path);
-        
+
         for (const entry of directory.files) {
-          if (entry.type === "Directory" || !entry.path.toLowerCase().endsWith('.pdf')) {
+          if (
+            entry.type === "Directory" ||
+            !entry.path.toLowerCase().endsWith(".pdf")
+          ) {
             continue;
           }
 
           const content = await entry.buffer();
-          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + "-" + Math.round(Math.random() * 1e9);
           const newFilename = "resume-" + uniqueSuffix + ".pdf";
           const newPath = path.join(uploadDir, newFilename);
-          
+
           fs.writeFileSync(newPath, content);
-          
+
           const resume = await Resume.create({
+            userId: req.user.id,
             fileName: newFilename,
             originalName: path.basename(entry.path),
             filePath: newPath,
@@ -46,10 +51,10 @@ export const uploadResumes = asyncHandler(async (req, res) => {
             mimeType: "application/pdf",
             jobId: jobId || null,
           });
-          
+
           uploadedFiles.push(resume);
         }
-        
+
         if (fs.existsSync(file.path)) {
           fs.unlinkSync(file.path);
         }
@@ -58,6 +63,7 @@ export const uploadResumes = asyncHandler(async (req, res) => {
       }
     } else {
       const resume = await Resume.create({
+        userId: req.user.id,
         fileName: file.filename,
         originalName: file.originalname,
         filePath: file.path,
@@ -75,19 +81,23 @@ export const uploadResumes = asyncHandler(async (req, res) => {
   });
 });
 
-
 export const getResumes = asyncHandler(async (req, res) => {
-  const resumes = await Resume.find().populate("jobId", "title department");
+  const resumes = await Resume.find({ userId: req.user.id }).populate(
+    "jobId",
+    "title department",
+  );
   res.status(200).json(resumes);
 });
 
-
 export const deleteResume = asyncHandler(async (req, res) => {
-  const resume = await Resume.findById(req.params.id);
+  const resume = await Resume.findOne({
+    _id: req.params.id,
+    userId: req.user.id,
+  });
 
   if (!resume) {
     res.status(404);
-    throw new Error("Resume not found");
+    throw new Error("Resume not found or unauthorized");
   }
 
   if (fs.existsSync(resume.filePath)) {

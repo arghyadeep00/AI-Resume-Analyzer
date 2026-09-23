@@ -26,6 +26,7 @@ export const postJob = asyncHandler(async (req, res) => {
   }
 
   const job = new Job({
+    userId: req.user.id,
     title,
     department,
     employmentType,
@@ -40,17 +41,17 @@ export const postJob = asyncHandler(async (req, res) => {
 });
 
 export const getJobs = asyncHandler(async (req, res) => {
-  const jobs = await Job.find();
+  const jobs = await Job.find({ userId: req.user.id });
   res.status(200).json(jobs);
 });
 
 export const getJobById = asyncHandler(async (req, res) => {
   const jobId = req.params.id;
-  const job = await Job.findById(jobId);
+  const job = await Job.findOne({ _id: jobId, userId: req.user.id });
 
   if (!job) {
     res.status(404);
-    throw new Error("Job not found");
+    throw new Error("Job not found or unauthorized");
   }
 
   res.status(200).json(job);
@@ -68,8 +69,8 @@ export const updateJob = asyncHandler(async (req, res) => {
     experienceYears,
   } = req.body;
 
-  const job = await Job.findByIdAndUpdate(
-    jobId,
+  const job = await Job.findOneAndUpdate(
+    { _id: jobId, userId: req.user.id },
     {
       title,
       department,
@@ -84,18 +85,18 @@ export const updateJob = asyncHandler(async (req, res) => {
 
   if (!job) {
     res.status(404);
-    throw new Error("Job not found");
+    throw new Error("Job not found or unauthorized");
   }
   res.status(200).json({ message: "Job updated successfully" });
 });
 
 export const deleteJob = asyncHandler(async (req, res) => {
   const jobId = req.params.id;
-  const job = await Job.findByIdAndDelete(jobId);
+  const job = await Job.findOneAndDelete({ _id: jobId, userId: req.user.id });
 
   if (!job) {
     res.status(404);
-    throw new Error("Job not found");
+    throw new Error("Job not found or unauthorized");
   }
 
   res.status(200).json({ message: "Job deleted successfully" });
